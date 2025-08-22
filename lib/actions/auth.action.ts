@@ -1,7 +1,9 @@
 'use server';
 
-import { db } from "@/firebase/admin";
-import { error } from "console";
+import { auth, db } from "@/firebase/admin";
+import { cookies } from "next/headers";
+
+const ONE_WEEK=60*60*24*7;
 
 export async function signUp(params:SignUpParams){
 const {uid,name,email}= params;
@@ -17,7 +19,12 @@ try {
     await db.collection('users').doc(uid).set({
         name,email
     })
-    
+
+    return{
+        success:true,
+        message:'Account created successfully. Please SigIn.'
+    }
+
 } catch (e:any) {
     console.error('Error creating the user',e);
 
@@ -33,4 +40,41 @@ try {
         message:'Failed to create an account.'
     }
 }
+}
+
+export async function signIn(params:SignInParams){
+    const {email,idToken} = params;
+    try {
+        const userRecord = await auth.getUserByEmail(email);
+
+         if (!userRecord){
+            return{
+                success:false,
+                message:'User does not exists. Create an account instead.'
+            }
+
+         }
+         await setSessionCookie(idToken);
+        
+    } catch (e) {
+     console.log(e);
+     return {
+        success:false,
+        message:'Failed to log into an account.'
+     }   
+    }
+}
+
+export async function setSessionCookie(idToken: string){
+    const cookieStore = await cookies();
+    const sessionCookie = await auth.createSessionCookie(idToken,{
+      expiresIn:ONE_WEEK*1000,
+    })
+    cookieStore.set('session',sessionCookie,{
+        maxAge:ONE_WEEK*1000,
+        httpOnly:true,
+        secure:process.env.NODE_ENV === 'production',
+        path:'/',
+        sameSite:'lax'
+    })
 }
