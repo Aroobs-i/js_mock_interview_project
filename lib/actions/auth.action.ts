@@ -25,7 +25,8 @@ try {
         message:'Account created successfully. Please SigIn.'
     }
 
-} catch (e:any) {
+} catch (e: any)
+ {
     console.error('Error creating the user',e);
 
     if (e.code === 'auth/email-already exists'){
