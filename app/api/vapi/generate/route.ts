@@ -26,8 +26,8 @@ export async function POST(request: Request) {
     });
 
     const interview = {
-      type: type,
       role: role,
+      type: type,
       level: level,
       techstack: techstack.split(","),
       questions: JSON.parse(questions),
